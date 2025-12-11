@@ -123,7 +123,51 @@ async function searchTopResults(
 
 exports.parse = (req, res) => {
   try {
-    const { rawText } = req.body;
+    console.log('parse endpoint req.body:', JSON.stringify(req.body));
+    console.log('parse endpoint content-type:', req.headers['content-type']);
+    // Be defensive about how the body may look when coming through
+    // Lambda + API Gateway + serverless-http. Support all of:
+    // - { rawText: "..." }
+    // - { body: { rawText: "..." } }
+    // - { body: "..." }
+    // - plain string "...".
+    let rawText = null;
+
+    const body = req.body;
+
+    if (body && typeof body === 'object') {
+      if ('rawText' in body) {
+        rawText = body.rawText;
+      } else if ('body' in body) {
+        const inner = body.body;
+        if (inner && typeof inner === 'object' && 'rawText' in inner) {
+          rawText = inner.rawText;
+        } else if (typeof inner === 'string') {
+          rawText = inner;
+        }
+      }
+    } else if (typeof body === 'string') {
+      rawText = body;
+    }
+
+    // As a final fallback, inspect the original API Gateway event body
+    // (available via serverless-http) in case req.body was not
+    // deserialized as expected.
+    if (!rawText && req.apiGateway && req.apiGateway.event) {
+      const eventBody = req.apiGateway.event.body;
+      if (eventBody && typeof eventBody === 'string') {
+        try {
+          const parsed = JSON.parse(eventBody);
+          if (parsed && typeof parsed.rawText === 'string') {
+            rawText = parsed.rawText;
+          } else {
+            rawText = eventBody;
+          }
+        } catch (e) {
+          rawText = eventBody;
+        }
+      }
+    }
 
     if (!rawText || typeof rawText !== 'string') {
       return res
@@ -146,8 +190,48 @@ exports.searchSelected = async (req, res) => {
         .status(500)
         .json({ error: 'SERPER_API_KEY environment variable is not set.' });
     }
+    console.log('searchSelected req.body:', JSON.stringify(req.body));
+    console.log('searchSelected content-type:', req.headers['content-type']);
 
-    const { schoolName, universityWebsite, selections } = req.body;
+    // Similar to parse, be defensive about how the body is shaped.
+    let schoolName = null;
+    let universityWebsite = null;
+    let selections = null;
+
+    const body = req.body;
+
+    if (body && typeof body === 'object') {
+      if (typeof body.schoolName === 'string') {
+        schoolName = body.schoolName;
+      }
+      if (typeof body.universityWebsite === 'string') {
+        universityWebsite = body.universityWebsite;
+      }
+      if (Array.isArray(body.selections)) {
+        selections = body.selections;
+      }
+    }
+
+    // Fallback: inspect raw API Gateway event body if values are missing.
+    if ((!schoolName || !selections) && req.apiGateway && req.apiGateway.event) {
+      const eventBody = req.apiGateway.event.body;
+      if (eventBody && typeof eventBody === 'string') {
+        try {
+          const parsed = JSON.parse(eventBody);
+          if (!schoolName && typeof parsed.schoolName === 'string') {
+            schoolName = parsed.schoolName;
+          }
+          if (!universityWebsite && typeof parsed.universityWebsite === 'string') {
+            universityWebsite = parsed.universityWebsite;
+          }
+          if (!selections && Array.isArray(parsed.selections)) {
+            selections = parsed.selections;
+          }
+        } catch (e) {
+          // ignore parse failure, we'll validate below
+        }
+      }
+    }
 
     if (!schoolName || typeof schoolName !== 'string') {
       return res

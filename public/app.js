@@ -731,7 +731,7 @@ form.addEventListener('submit', async (e) => {
   finalToolsEl.innerHTML = '';
 
   try {
-    const response = await axios.post(`${window.location.pathname}parse`, { rawText });
+    const response = await axios.post('parse', { rawText });
     const { questions } = response.data || {};
     lastParsedQuestions = questions || [];
     currentSchoolName = schoolName;
