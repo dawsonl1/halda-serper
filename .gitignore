@@ -33,5 +33,6 @@ Thumbs.db
 # Environment variables
 .env
 
-# Zipped files
+# Build artifacts
 *.zip
+dist-lambda/

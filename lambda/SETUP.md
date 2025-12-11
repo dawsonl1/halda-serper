@@ -48,7 +48,7 @@ Right now, the app is **stateless** and does not persist searches. You can deplo
 
 1. Go to **AWS Console → Lambda → Create function**.
 2. Choose **Author from scratch**.
-3. Runtime: **Node.js 18.x**.
+3. Runtime: **Node.js 24.x** (or the latest Node.js runtime shown in your console).
 4. Function name: `serper-search-console`.
 5. Permissions: use a basic execution role (e.g. `AWSLambdaBasicExecutionRole`).
 6. Create the function.

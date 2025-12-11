@@ -22,4 +22,15 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // Wrap the Express app with serverless-http so it can handle
 // API Gateway / Lambda events.
-module.exports.handler = serverless(app);
+//
+// When using API Gateway stages (e.g. /default), the incoming path
+// may look like /default/ or /default/parse. Express only knows
+// about / and /parse, so we strip the stage prefix using basePath.
+//
+// You can override the base path via the LAMBDA_BASE_PATH env var
+// if you rename the stage in API Gateway.
+const basePath = process.env.LAMBDA_BASE_PATH || '/default';
+
+module.exports.handler = serverless(app, {
+  basePath,
+});
