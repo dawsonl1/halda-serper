@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Serper Search Console</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="header">
+        <h1>Serper Search Console</h1>
+        <p>Enter a query, we'll fetch Google results via Serper and show the top URLs.</p>
+      </header>
+
+      <main class="main">
+        <section class="card">
+          <form id="search-form" class="form">
+            <label for="schoolName" class="label">School name</label>
+            <input
+              id="schoolName"
+              name="schoolName"
+              class="input input--text"
+              type="text"
+              placeholder="e.g., Antioch College"
+              required
+            />
+
+            <label for="universityWebsite" class="label">University website (optional)</label>
+            <input
+              id="universityWebsite"
+              name="universityWebsite"
+              class="input input--text"
+              type="url"
+              placeholder="https://www.example.edu"
+            />
+
+            <label for="rawText" class="label">Q-coded questions and answers</label>
+            <textarea
+              id="rawText"
+              name="rawText"
+              class="input"
+              rows="10"
+              placeholder="Paste the Q-coded text here..."
+              required
+            ></textarea>
+
+            <button type="submit" class="button">Parse Questions</button>
+          </form>
+
+          <div id="status" class="status" aria-live="polite"></div>
+        </section>
+
+        <section id="parsed-card" class="card hidden">
+          <h2 class="section-title">Select questions and answers</h2>
+          <div id="parsed-questions" class="results"></div>
+
+          <button id="run-serper" type="button" class="button button--secondary">Run Serper Search for Selected Answers</button>
+          <div id="search-status" class="status" aria-live="polite"></div>
+        </section>
+
+        <section id="final-card" class="card hidden">
+          <h2 class="section-title">Final selected answer links</h2>
+          <div id="final-copy" class="results"></div>
+          <div id="final-tools" class="results results--secondary"></div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <span>Powered by Serper</span>
+      </footer>
+    </div>
+
+    <!-- Rerun search confirmation modal -->
+    <div id="rerun-modal" class="modal hidden" aria-hidden="true">
+      <div class="modal__backdrop"></div>
+      <div class="modal__content" role="dialog" aria-modal="true" aria-labelledby="rerun-modal-title">
+        <h3 id="rerun-modal-title" class="modal__title">Refine search for this answer</h3>
+        <p class="modal__text">We'll run a new Serper search with this query. You can edit it before running:</p>
+        <input id="rerun-query" class="modal__input" type="text" />
+        <div class="modal__actions">
+          <button id="rerun-cancel" type="button" class="button button--ghost button--small">Cancel</button>
+          <button id="rerun-confirm" type="button" class="button button--small">Run search</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>
