@@ -689,7 +689,7 @@ async function rerunSingleSearch() {
       ],
     };
 
-    const response = await axios.post('/search-selected', body);
+    const response = await axios.post('search-selected', body);
     const { results } = response.data || {};
     const newResult = Array.isArray(results) ? results[0] : null;
 
@@ -731,7 +731,7 @@ form.addEventListener('submit', async (e) => {
   finalToolsEl.innerHTML = '';
 
   try {
-    const response = await axios.post('/parse', { rawText });
+    const response = await axios.post(`${window.location.pathname}parse`, { rawText });
     const { questions } = response.data || {};
     lastParsedQuestions = questions || [];
     currentSchoolName = schoolName;
@@ -839,7 +839,7 @@ runSerperButton.addEventListener('click', async () => {
   setSearchStatus('Running Serper search for selected answers...', 'loading');
 
   try {
-    const response = await axios.post('/search-selected', {
+    const response = await axios.post('search-selected', {
       schoolName,
       universityWebsite: currentUniversityWebsite || '',
       selections: newSelections,
