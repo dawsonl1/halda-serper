@@ -18,7 +18,12 @@ app.use(express.json());
 app.use('/', searchRoutes);
 
 // Static assets (CSS/JS)
-app.use(express.static(path.join(__dirname, '..', 'public')));
+const staticDir = path.join(__dirname, '..', 'public');
+app.use(express.static(staticDir));
+// Also serve static files under the /default prefix so that
+// /default/styles.css and /default/app.js resolve correctly
+// for the API Gateway stage.
+app.use('/default', express.static(staticDir));
 
 // Wrap the Express app with serverless-http so it can handle
 // API Gateway / Lambda events.

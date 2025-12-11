@@ -23,20 +23,21 @@ This includes `serverless-http`, which adapts API Gateway events to Express.
 
 Lambda needs the **code + node_modules**, but no build step is required for this app.
 
-From the project root:
+From the project root you can use the helper script:
 
 ```bash
-# Install production deps only into a clean folder for deployment (optional but recommended)
-rm -rf dist-lambda
-mkdir dist-lambda
-cp -R controllers public routes views index.js package.json package-lock.json .env dist-lambda/
-cd dist-lambda
-npm install --only=production
-cp -R ../lambda ./lambda
-zip -r serper-search-console.zip .
+npm run build:lambda
 ```
 
-Upload `serper-search-console.zip` to Lambda in the next steps.
+This script will:
+
+- Create/refresh a `dist-lambda/` folder.
+- Copy the app source (`controllers`, `public`, `routes`, `views`, `index.js`, `package.json`, `package-lock.json`, `.env`).
+- Install **production-only** dependencies.
+- Copy the `lambda/` folder.
+- Produce `dist-lambda/serper-search-console.zip` ready for upload.
+
+Upload `dist-lambda/serper-search-console.zip` to Lambda in the next steps.
 
 > **Note:** For a real pipeline you would automate this with a script or CI, but this manual zip works fine to get started.
 
@@ -120,16 +121,10 @@ When you change code:
 
 ```bash
 cd /path/to/serper-server
-rm -rf dist-lambda
-mkdir dist-lambda
-cp -R controllers public routes views index.js package.json package-lock.json .env dist-lambda/
-cd dist-lambda
-npm install --only=production
-cp -R ../lambda ./lambda
-zip -r serper-search-console.zip .
+npm run build:lambda
 ```
 
-2. In the Lambda console, upload the new zip under **Code → Upload from → .zip file**.
+2. In the Lambda console, upload the new `dist-lambda/serper-search-console.zip` under **Code → Upload from → .zip file**.
 
 The changes will be live for the next request.
 
