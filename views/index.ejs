@@ -7,7 +7,7 @@
     <link
       rel="icon"
       type="image/svg+xml"
-      href="/assets/Ravenclaw%20Shield%20Black.svg"
+      href="assets/Ravenclaw%20Shield%20Black.svg"
     />
     <link rel="stylesheet" href="styles.css" />
   </head>
@@ -15,7 +15,7 @@
     <div class="page">
       <header class="header">
         <img
-          src="/assets/Halda%20Logo%20White.svg"
+          src="assets/Halda%20Logo%20White.svg"
           alt="Halda"
           class="header-logo"
         />
@@ -70,7 +70,12 @@
         </section>
 
         <section id="final-card" class="card hidden">
-          <h2 class="section-title">Final selected answer links</h2>
+          <div class="final-header">
+            <h2 class="section-title">Final selected answer links</h2>
+            <button id="copy-final" type="button" class="copy-button" title="Copy all links">
+              <img src="assets/copy_icon.svg" alt="Copy" />
+            </button>
+          </div>
           <div id="final-copy" class="results"></div>
           <div id="final-tools" class="results results--secondary"></div>
         </section>
@@ -78,13 +83,15 @@
 
       <footer class="footer">
         <img
-          src="/assets/Powered%20by%20Halda-Black.svg"
+          src="assets/Powered%20by%20Halda-Black.svg"
           alt="Powered by Halda"
         />
       </footer>
     </div>
 
     <!-- Rerun search confirmation modal -->
+    <div id="toast" class="toast hidden" aria-live="polite"></div>
+
     <div id="rerun-modal" class="modal hidden" aria-hidden="true">
       <div class="modal__backdrop"></div>
       <div class="modal__content" role="dialog" aria-modal="true" aria-labelledby="rerun-modal-title">

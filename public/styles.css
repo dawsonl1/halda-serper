@@ -68,6 +68,33 @@ body {
   color: #111827;
 }
 
+.final-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.copy-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.copy-button img {
+  width: 16px;
+  height: 16px;
+}
+
+.copy-button:hover {
+  border-color: #7c5cff; /* purple accent like other controls */
+}
+
 .form {
   display: flex;
   flex-direction: column;
@@ -144,6 +171,10 @@ body {
 .button--small {
   padding: 0.35rem 0.9rem;
   font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .button:hover {
@@ -460,6 +491,9 @@ body {
   background: #ffffff;
   font-size: 1.6rem;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
 }
 
@@ -525,4 +559,25 @@ body {
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.5rem;
+  transform: translateX(-50%);
+  background: #111827;
+  color: #f9fafb;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.4);
+  z-index: 50;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.toast--visible {
+  opacity: 1;
 }

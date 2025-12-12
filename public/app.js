@@ -10,6 +10,8 @@ const runSerperButton = document.getElementById('run-serper');
 const finalCard = document.getElementById('final-card');
 const finalCopyEl = document.getElementById('final-copy');
 const finalToolsEl = document.getElementById('final-tools');
+const copyFinalButton = document.getElementById('copy-final');
+const toastEl = document.getElementById('toast');
 const rerunModal = document.getElementById('rerun-modal');
 const rerunQueryInput = document.getElementById('rerun-query');
 const rerunCancelButton = document.getElementById('rerun-cancel');
@@ -49,6 +51,18 @@ function setSearchStatus(message, type = 'info') {
   if (!searchStatusEl) return;
   searchStatusEl.textContent = message;
   searchStatusEl.className = `status status--${type}`;
+}
+
+function showToast(message, durationMs = 2000) {
+  if (!toastEl) return;
+  toastEl.textContent = message;
+  toastEl.classList.remove('hidden');
+  toastEl.classList.add('toast--visible');
+
+  window.clearTimeout(showToast._timeoutId);
+  showToast._timeoutId = window.setTimeout(() => {
+    toastEl.classList.remove('toast--visible');
+  }, durationMs);
 }
 
 function showElement(el) {
@@ -308,7 +322,6 @@ function attachAudienceSelectBehavior(select) {
     updateRunSerperButtonState();
   });
 
-  // Also watch for any checkbox changes within the parsed area (safety net)
   parsedQuestionsEl.addEventListener('change', (event) => {
     if (
       event.target.classList.contains('answer-checkbox') ||
@@ -669,6 +682,57 @@ function renderFinalResults(results, newResultKeys = new Set()) {
   });
   // Refresh the Run Serper button label/color based on new results
   updateRunSerperButtonState();
+}
+
+// Copy the final label+URL pairs to the clipboard, one per line.
+if (copyFinalButton) {
+  copyFinalButton.addEventListener('click', async () => {
+    const lineEls = Array.from(finalCopyEl.querySelectorAll('.answer-line'));
+    if (lineEls.length === 0) {
+      setSearchStatus('There are no results to copy yet.', 'info');
+      return;
+    }
+
+    const lines = lineEls
+      .map((line) => {
+        const labelEl = line.querySelector('.answer-label');
+        const urlEl = line.querySelector('.answer-url');
+        if (!labelEl || !urlEl) return '';
+
+        const rawLabel = (labelEl.textContent || '').trim();
+        const label = rawLabel.replace(/:$/, ''); // strip trailing colon
+        const urlText = (urlEl.textContent || '').trim();
+
+        if (!urlText || urlText === 'No results found.') {
+          return label ? `${label} No results found.` : '';
+        }
+
+        return `${label} ${urlText}`.trim();
+      })
+      .filter(Boolean);
+
+    const text = lines.join('\n');
+
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+
+      showToast('Copied to clipboard');
+    } catch (err) {
+      console.error('Failed to copy final links', err);
+      setSearchStatus('Unable to copy links to clipboard.', 'error');
+    }
+  });
 }
 
 async function rerunSingleSearch() {
