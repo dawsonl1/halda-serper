@@ -158,7 +158,9 @@ function updateRunSerperButtonState() {
   });
 
   if ((lastSearchResults || []).length > 0 && newCount > 0) {
-    const label = newCount === 1 ? 'Run search for 1 new answer' : `Run search for ${newCount} new answers`;
+    const label = newCount === 1
+      ? 'Run Search For 1 New Answer'
+      : `Run Search For ${newCount} New Answers`;
     runSerperButton.textContent = label;
     runSerperButton.classList.add('button--partial');
   } else {
@@ -430,6 +432,17 @@ function renderParsedQuestions(questions) {
         const noneChecked = Array.from(answerCheckboxes).every((c) => !c.checked);
         qCheckbox.checked = allChecked;
         qCheckbox.indeterminate = !allChecked && !noneChecked;
+
+        // If this row is being unchecked, immediately clear the pending
+        // highlight so the purple bar disappears without waiting on the
+        // aggregated state logic.
+        if (!cb.checked) {
+          const row = cb.closest('.answer-select-row');
+          if (row) {
+            row.classList.remove('answer-select-row--pending');
+          }
+        }
+
         updateRunSerperButtonState();
       });
     });

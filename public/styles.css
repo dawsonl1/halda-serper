@@ -5,8 +5,8 @@
 body {
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: radial-gradient(circle at top left, #1f2933, #020617);
-  color: #0f172a;
+  background: #020617; /* dark shell */
+  color: #111827;
 }
 
 .page {
@@ -20,6 +20,12 @@ body {
   padding: 2.5rem 1.5rem 1.5rem;
   text-align: center;
   color: #e5e7eb;
+}
+
+.header-logo {
+  height: 40px;
+  width: auto;
+  margin-bottom: 0.75rem;
 }
 
 .header h1 {
@@ -44,10 +50,10 @@ body {
 }
 
 .card {
-  background: #f9fafb;
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.30);
+  background: #f3f4f6; /* slightly darker gray so it stands out more from inputs */
+  border-radius: 0.95rem;
+  padding: 1.6rem;
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
   border: 1px solid #e5e7eb;
 }
 
@@ -71,18 +77,19 @@ body {
 .label {
   font-size: 0.9rem;
   font-weight: 500;
-  color: #374151;
+  color: #111827;
 }
 
 .input {
   width: 100%;
   border-radius: 0.5rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid #1f2937;
   padding: 0.75rem 0.9rem;
   resize: vertical;
   font: inherit;
   outline: none;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  color: #111827; /* darker input text for readability */
 }
 
 .input--text {
@@ -90,8 +97,8 @@ body {
 }
 
 .input:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 1px #6366f1;
+  border-color: #4fabff;
+  box-shadow: 0 0 0 1px #4fabff;
 }
 
 .button {
@@ -99,7 +106,7 @@ body {
   padding: 0.6rem 1.4rem;
   border-radius: 999px;
   border: none;
-  background: linear-gradient(135deg, #4f46e5, #06b6d4);
+  background: #2663eb;
   color: white;
   font-weight: 500;
   cursor: pointer;
@@ -107,26 +114,31 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.25);
-  transition: background-color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
+  box-shadow: none;
+  transition: background-color 0.12s ease, transform 0.12s ease;
 }
 
 .button--secondary {
-  background: #111827;
+  background: #2663eb;
   box-shadow: none;
 }
 
 .button--partial {
   /* Distinct solid state used when only some answers will rerun */
-  background: #0ea5e9;
+  background: #7c5cff; /* slightly darker purple for contrast */
   color: #ffffff;
 }
 
 .button--ghost {
-  background: transparent;
-  color: #111827;
+  background: #ffffff; /* solid background so row hover doesn't affect it */
+  color: #111827;      /* same dark text as dropdowns */
   box-shadow: none;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #94a3b8;
+}
+
+.button--ghost:hover {
+  background-color: #ffffff;
+  border-color: #7c5cff; /* purple accent */
 }
 
 .button--small {
@@ -136,12 +148,10 @@ body {
 
 .button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
 }
 
 .button:active {
   transform: translateY(0);
-  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.25);
 }
 
 .status {
@@ -150,19 +160,19 @@ body {
 }
 
 .status--info {
-  color: #4b5563;
+  color: #9ca3af;
 }
 
 .status--loading {
-  color: #1d4ed8;
+  color: #7c5cff; /* purple to match partial run state */
 }
 
 .status--success {
-  color: #16a34a;
+  color: #22c55e;
 }
 
 .status--error {
-  color: #b91c1c;
+  color: #fb7185;
 }
 
 .results {
@@ -222,6 +232,15 @@ body {
   color: #6b7280;
 }
 
+.footer img {
+  background-color: #ffffff;
+  padding: 0.4rem 1.6rem;
+  border-radius: 999px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.35);
+  height: 52px;
+  width: auto;
+}
+
 .question-block {
   margin-bottom: 1.25rem;
 }
@@ -230,12 +249,22 @@ body {
   margin: 0 0 0.5rem;
   font-size: 1rem;
   font-weight: 600;
+  color: #111827;
+}
+
+.question-checkbox {
+  align-self: flex-start; /* align with the first row (question title) */
+  margin-top: 0.29rem;   /* small nudge to visually center with text */
+}
+
+.answer-checkbox {
+  align-self: center; /* center with answer labels */
 }
 
 .question-title--secondary {
   margin-top: 1.5rem;
   font-size: 0.95rem;
-  color: #4b5563;
+  color: #111827;
 }
 
 .answer-line {
@@ -248,6 +277,7 @@ body {
 
 .answer-label {
   font-weight: 500;
+  color: #111827;
 }
 
 /* kept in case we want inline badges later; currently unused but valid */
@@ -263,6 +293,7 @@ body {
 .answer-url {
   word-break: break-all;
   flex: 1;
+  color: #111827; /* dark text for URLs / final copy lines */
 }
 
 #final-copy {
@@ -284,8 +315,13 @@ body {
 
 .answers-list {
   list-style: none;
-  padding-left: 1.5rem;
+  padding-left: 0; /* let rows control their own left padding so hover fills to border */
   margin: 0.5rem 0 0;
+  color: #111827;
+  border-radius: 0.75rem;
+  background-color: #FFFFFF; /* use same background as parent card */
+  border: 1px solid #1f2937; /* match text input border */
+  overflow: hidden; /* ensure inner row backgrounds follow the rounded corners */
 }
 
 .answer-select-row {
@@ -295,34 +331,34 @@ body {
   align-items: center;
   column-gap: 0.75rem;
   font-size: 0.9rem;
-  padding: 0.18rem 0.5rem;
+  padding: 0.18rem 0.75rem 0.18rem 1.5rem; /* include left padding inside hover area */
   min-height: 2.2rem; /* keep rows tall enough even before advanced options are shown */
-  background-color: #f9fafb;
+  background-color: transparent; /* base color comes from answers-list */
+  border-left: 4px solid transparent; /* reserve space so pending state doesn't shift */
 }
 
 .answer-select-row--pending {
-  border-left: 4px solid #0ea5e9; /* matches .button--partial */
-  padding-left: 0.75rem;
+  border-left-color: #907fff; /* purple accent for pending reruns */
 }
 
 .answer-select-row:hover {
-  background-color: #eef2ff;
+  background-color: #e5edf9; /* darker hover so it is visible */
   cursor: pointer;
 }
 
 .audience-select {
-  font: inherit;
-  padding: 0.2rem 0.35rem;
+  font-size: 0.9rem;
+  padding: 0.3rem 0.55rem;
   border-radius: 0.375rem;
-  border: 1px solid #d1d5db;
-  background-color: #fff;
-  width: 220px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  width: 240px;
   justify-self: end;
 }
 
 .audience-select--small {
-  font-size: 0.8rem;
-  width: 220px;
+  font-size: 0.85rem;
+  width: 240px;
 }
 
 .question-controls {
@@ -351,14 +387,17 @@ body {
   margin-top: 0.25rem;
   padding: 0.15rem 0.55rem;
   border-radius: 999px;
-  border: 1px solid #d1d5db;
-  background: #fff;
-  color: #4b5563;
+  border: 1px solid #94a3b8;
+  background: #ffffff;
+  color: #111827;
   font-size: 0.75rem;
   cursor: pointer;
   text-decoration: none;
   white-space: nowrap;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+.link-toggle:hover {
+  border-color: #7c5cff;
 }
 
 .apply-all-button {
@@ -372,7 +411,6 @@ body {
   cursor: pointer;
   text-decoration: none;
   white-space: nowrap;
-  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.25);
 }
 
 .apply-all-button:hover {
@@ -381,7 +419,7 @@ body {
 
 .link-tools-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 2.6fr) auto auto;
+  grid-template-columns: minmax(0, 0.9fr) 290px auto auto;
   align-items: center;
   column-gap: 0.75rem;
   font-size: 0.85rem;
@@ -391,18 +429,28 @@ body {
   border: 1px solid #e5e7eb;
 }
 
+.link-tools-row:hover {
+  background-color: #eef2ff;
+}
+
+/* Vertically center the Preview button within the row */
+.link-tools-row .button--ghost {
+  align-self: center;
+}
+
 .link-tools-row--new {
   border-left: 4px solid #22c55e; /* green highlight for newly updated rows */
   padding-left: 0.6rem;         /* adjust padding after thicker border */
 }
 
 .link-select {
-  min-width: 220px;
-  width: 100%;
-  font: inherit;
-  padding: 0.25rem 0.4rem;
+  width: 290px;
+  max-width: 290px;
+  font-size: 0.9rem;
+  padding: 0.3rem 0.55rem;
   border-radius: 0.375rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
 }
 
 .link-reload-button {
@@ -416,7 +464,8 @@ body {
 }
 
 .link-reload-button:hover {
-  background-color: #eef2ff;
+  background-color: #ffffff;
+  border-color: #7c5cff;
 }
 
 .modal {
