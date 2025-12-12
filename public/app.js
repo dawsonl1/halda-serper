@@ -4,6 +4,7 @@ const schoolNameInput = document.getElementById('schoolName');
 const rawTextInput = document.getElementById('rawText');
 const statusEl = document.getElementById('status');
 const searchStatusEl = document.getElementById('search-status');
+const searchLoadingEl = document.getElementById('search-loading');
 const parsedCard = document.getElementById('parsed-card');
 const parsedQuestionsEl = document.getElementById('parsed-questions');
 const runSerperButton = document.getElementById('run-serper');
@@ -51,6 +52,16 @@ function setSearchStatus(message, type = 'info') {
   if (!searchStatusEl) return;
   searchStatusEl.textContent = message;
   searchStatusEl.className = `status status--${type}`;
+
+  if (searchLoadingEl && runSerperButton) {
+    if (type === 'loading') {
+      searchLoadingEl.classList.remove('hidden');
+      runSerperButton.disabled = true;
+    } else {
+      searchLoadingEl.classList.add('hidden');
+      runSerperButton.disabled = false;
+    }
+  }
 }
 
 function showToast(message, durationMs = 2000) {
