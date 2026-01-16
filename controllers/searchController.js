@@ -107,7 +107,10 @@ async function searchTopResults(
   const data = response.data || {};
   let organic = Array.isArray(data.organic) ? data.organic : [];
 
-  if (universityDomainRoot) {
+  const enforceDomain =
+    !queryOverride || (typeof queryOverride === 'string' && queryOverride.trim().length === 0);
+
+  if (enforceDomain && universityDomainRoot) {
     organic = organic.filter((item) => {
       const root = getDomainRootFromUrl(item.link);
       return root && root === universityDomainRoot;

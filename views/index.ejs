@@ -108,6 +108,20 @@
       </div>
     </div>
 
+    <div id="manual-link-modal" class="modal hidden" aria-hidden="true">
+      <div class="modal__backdrop"></div>
+      <div class="modal__content" role="dialog" aria-modal="true" aria-labelledby="manual-link-modal-title">
+        <h3 id="manual-link-modal-title" class="modal__title">Set manual link</h3>
+        <p class="modal__text">Paste the URL you want to use for this answer.</p>
+        <input id="manual-link-input" class="modal__input" type="url" placeholder="https://example.edu/path" />
+        <p id="manual-link-error" class="manual-link-modal__error hidden"></p>
+        <div class="modal__actions">
+          <button id="manual-link-cancel" type="button" class="button button--ghost button--small">Cancel</button>
+          <button id="manual-link-confirm" type="button" class="button button--small">Set link</button>
+        </div>
+      </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="app.js"></script>
   </body>

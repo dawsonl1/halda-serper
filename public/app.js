@@ -17,12 +17,19 @@ const rerunModal = document.getElementById('rerun-modal');
 const rerunQueryInput = document.getElementById('rerun-query');
 const rerunCancelButton = document.getElementById('rerun-cancel');
 const rerunConfirmButton = document.getElementById('rerun-confirm');
+const manualLinkModal = document.getElementById('manual-link-modal');
+const manualLinkInput = document.getElementById('manual-link-input');
+const manualLinkError = document.getElementById('manual-link-error');
+const manualLinkCancelButton = document.getElementById('manual-link-cancel');
+const manualLinkConfirmButton = document.getElementById('manual-link-confirm');
+const manualLinkBackdrop = manualLinkModal ? manualLinkModal.querySelector('.modal__backdrop') : null;
 
 let lastParsedQuestions = [];
 let currentSchoolName = '';
 let currentUniversityWebsite = '';
 let lastSearchResults = [];
 let rerunResultIndex = null;
+let manualLinkTargetIndex = null;
 
 const audienceOptions = [
   { value: '', label: 'Any audience' },
@@ -39,6 +46,7 @@ const BUILT_IN_AUDIENCE_VALUES = new Set(
 
 const AUDIENCE_STORAGE_KEY = 'serper:audience-options:v1';
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const MAX_SELECTIONS_PER_REQUEST = 4;
 
 // Load any stored custom audiences (pruned to the last 24 hours)
 loadStoredAudiences();
@@ -62,6 +70,39 @@ function setSearchStatus(message, type = 'info') {
       runSerperButton.disabled = false;
     }
   }
+}
+
+async function runSearchSelectedInBatches({ schoolName, universityWebsite, selections }) {
+  if (!Array.isArray(selections) || selections.length === 0) {
+    return [];
+  }
+
+  const totalBatches = Math.ceil(selections.length / MAX_SELECTIONS_PER_REQUEST);
+  const aggregatedResults = [];
+
+  for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
+    const start = batchIndex * MAX_SELECTIONS_PER_REQUEST;
+    const batchSelections = selections.slice(start, start + MAX_SELECTIONS_PER_REQUEST);
+
+    const statusMessage =
+      totalBatches === 1
+        ? 'Running Serper search for selected answers...'
+        : `Running Serper search (batch ${batchIndex + 1} of ${totalBatches})...`;
+
+    setSearchStatus(statusMessage, 'loading');
+
+    const response = await axios.post('search-selected', {
+      schoolName,
+      universityWebsite,
+      selections: batchSelections,
+    });
+    const { results } = response.data || {};
+    if (Array.isArray(results)) {
+      aggregatedResults.push(...results);
+    }
+  }
+
+  return aggregatedResults;
 }
 
 function showToast(message, durationMs = 2000) {
@@ -346,6 +387,102 @@ function attachAudienceSelectBehavior(select) {
   updateRunSerperButtonState();
 }
 
+function normalizeManualUrl(value) {
+  if (!value || typeof value !== 'string') return '';
+  return value.match(/^https?:\/\//i) ? value : `https://${value}`;
+}
+
+function applyManualLinkToResult(resultIndex, rawUrl) {
+  if (
+    !Array.isArray(lastSearchResults) ||
+    typeof resultIndex !== 'number' ||
+    resultIndex < 0 ||
+    resultIndex >= lastSearchResults.length
+  ) {
+    return { success: false, message: 'Unable to update this answer right now.' };
+  }
+
+  const normalizedUrl = normalizeManualUrl(rawUrl.trim());
+  if (!normalizedUrl) {
+    return { success: false, message: 'Please provide a URL.' };
+  }
+
+  try {
+    new URL(normalizedUrl);
+  } catch (e) {
+    return { success: false, message: 'Please enter a valid URL (include domain).' };
+  }
+
+  const entry = lastSearchResults[resultIndex];
+  const manualOption = {
+    title: `${entry.label} (manual)`,
+    url: normalizedUrl,
+    snippet: 'Manually added link',
+  };
+  const existingOptions = Array.isArray(entry.options) ? entry.options : [];
+
+  // Remove any existing identical manual option so we only keep the latest one up front.
+  const filteredOptions = existingOptions.filter((opt) => opt.url !== normalizedUrl);
+  entry.options = [manualOption, ...filteredOptions];
+  entry.url = normalizedUrl;
+
+  const highlightKey = `${entry.questionCode || ''}::${entry.optionCode || ''}`;
+  lastSearchResults[resultIndex] = entry;
+  renderFinalResults(lastSearchResults, new Set([highlightKey]));
+  setSearchStatus('Manual link added.', 'success');
+  return { success: true };
+}
+
+function openManualLinkModal(resultIndex) {
+  if (
+    !Array.isArray(lastSearchResults) ||
+    typeof resultIndex !== 'number' ||
+    resultIndex < 0 ||
+    resultIndex >= lastSearchResults.length
+  ) {
+    setSearchStatus('Unable to edit this link right now.', 'error');
+    return;
+  }
+
+  manualLinkTargetIndex = resultIndex;
+  const entry = lastSearchResults[resultIndex];
+  manualLinkInput.value = entry?.url || '';
+  manualLinkError.classList.add('hidden');
+  manualLinkError.textContent = '';
+  manualLinkModal.classList.remove('hidden');
+  manualLinkModal.setAttribute('aria-hidden', 'false');
+  manualLinkInput.focus();
+}
+
+function closeManualLinkModal() {
+  manualLinkTargetIndex = null;
+  manualLinkModal.classList.add('hidden');
+  manualLinkModal.setAttribute('aria-hidden', 'true');
+  manualLinkInput.value = '';
+  manualLinkError.classList.add('hidden');
+  manualLinkError.textContent = '';
+}
+
+function handleManualLinkConfirm() {
+  if (
+    manualLinkTargetIndex === null ||
+    manualLinkTargetIndex < 0 ||
+    manualLinkTargetIndex >= (lastSearchResults || []).length
+  ) {
+    setSearchStatus('No answer selected for manual link.', 'error');
+    closeManualLinkModal();
+    return;
+  }
+
+  const outcome = applyManualLinkToResult(manualLinkTargetIndex, manualLinkInput.value || '');
+  if (outcome.success) {
+    closeManualLinkModal();
+  } else {
+    manualLinkError.textContent = outcome.message || 'Unable to add link.';
+    manualLinkError.classList.remove('hidden');
+  }
+}
+
 function renderParsedQuestions(questions) {
   parsedQuestionsEl.innerHTML = '';
 
@@ -572,7 +709,31 @@ function renderParsedQuestions(questions) {
   });
 }
 
+if (manualLinkModal && manualLinkCancelButton && manualLinkConfirmButton) {
+  manualLinkCancelButton.addEventListener('click', () => {
+    closeManualLinkModal();
+  });
+
+  manualLinkConfirmButton.addEventListener('click', () => {
+    handleManualLinkConfirm();
+  });
+
+  if (manualLinkBackdrop) {
+    manualLinkBackdrop.addEventListener('click', () => {
+      closeManualLinkModal();
+    });
+  }
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !manualLinkModal.classList.contains('hidden')) {
+      closeManualLinkModal();
+    }
+  });
+}
+
 function renderFinalResults(results, newResultKeys = new Set()) {
+  const buildKey = (entry) => `${entry.questionCode || ''}::${entry.optionCode || ''}`;
+
   // Capture existing dropdown selections keyed by questionCode+optionCode
   const previousSelections = new Map();
   finalToolsEl.querySelectorAll('.link-tools-row').forEach((row) => {
@@ -596,11 +757,12 @@ function renderFinalResults(results, newResultKeys = new Set()) {
     return;
   }
 
-  // Copy-ready lines (no NEW badge here)
-  results.forEach((r, index) => {
+  // Copy-ready lines stay flat for easy clipboard usage
+  results.forEach((r) => {
     const line = document.createElement('div');
     line.className = 'answer-line';
-    line.dataset.resultIndex = String(index);
+    const rowKey = buildKey(r);
+    line.dataset.resultKey = rowKey;
 
     const label = document.createElement('span');
     label.className = 'answer-label';
@@ -615,82 +777,142 @@ function renderFinalResults(results, newResultKeys = new Set()) {
     finalCopyEl.appendChild(line);
   });
 
-  // Optional tools below for preview / alternate link selection
-  results.forEach((r, index) => {
-    if (!Array.isArray(r.options) || r.options.length === 0) {
-      return;
-    }
-
-    const row = document.createElement('div');
-    row.className = 'link-tools-row';
-    row.dataset.questionCode = r.questionCode || '';
-    row.dataset.optionCode = r.optionCode || '';
-
-    const rowKey = `${r.questionCode || ''}::${r.optionCode || ''}`;
-    const isNew = newResultKeys.has(rowKey);
-
-    if (isNew) {
-      row.classList.add('link-tools-row--new');
-    }
-
-    const label = document.createElement('span');
-    label.className = 'answer-label';
-    label.textContent = r.label;
-
-    const reloadButton = document.createElement('button');
-    reloadButton.type = 'button';
-    reloadButton.className = 'link-reload-button';
-    reloadButton.title = 'Re-run search for this answer';
-    reloadButton.textContent = '⟳';
-
-    const select = document.createElement('select');
-    select.className = 'link-select';
-
-    const key = `${r.questionCode || ''}::${r.optionCode || ''}`;
-    const savedValue = previousSelections.get(key) || '';
-
-    r.options.forEach((opt, optIndex) => {
-      const optionEl = document.createElement('option');
-      optionEl.value = opt.url || '';
-      optionEl.textContent = opt.url || '(no URL)';
-      if ((savedValue && optionEl.value === savedValue) || (!savedValue && optIndex === 0)) {
-        optionEl.selected = true;
-      }
-      select.appendChild(optionEl);
-    });
-
-    select.addEventListener('change', () => {
-      const targetLine = finalCopyEl.querySelector(
-        `.answer-line[data-result-index="${index}"] .answer-url`
-      );
-      if (targetLine) {
-        const newUrl = select.value || '';
-        targetLine.textContent = newUrl ? ` ${newUrl}` : ' No results found.';
-      }
-    });
-
-    const previewButton = document.createElement('button');
-    previewButton.type = 'button';
-    previewButton.className = 'button button--ghost button--small';
-    previewButton.textContent = 'Preview';
-
-    previewButton.addEventListener('click', () => {
-      const url = select.value;
-      if (url) {
-        window.open(url, '_blank', 'noopener,noreferrer');
-      }
-    });
-
-    row.appendChild(label);
-    row.appendChild(select);
-    row.appendChild(previewButton);
-    row.appendChild(reloadButton);
-    finalToolsEl.appendChild(row);
-
-    reloadButton.addEventListener('click', () => {
-      openRerunModal(index);
-    });
+  const questionTextByCode = new Map();
+  (lastParsedQuestions || []).forEach((q) => {
+    questionTextByCode.set(q.code, q.text);
   });
+
+  const groupedByQuestion = new Map();
+  results.forEach((r) => {
+    const code = r.questionCode || '__unmapped__';
+    if (!groupedByQuestion.has(code)) {
+      groupedByQuestion.set(code, []);
+    }
+    groupedByQuestion.get(code).push(r);
+  });
+
+  const orderedQuestionCodes = [];
+  (lastParsedQuestions || []).forEach((q) => {
+    if (groupedByQuestion.has(q.code)) {
+      orderedQuestionCodes.push(q.code);
+    }
+  });
+  groupedByQuestion.forEach((_, code) => {
+    if (!orderedQuestionCodes.includes(code)) {
+      orderedQuestionCodes.push(code);
+    }
+  });
+
+  orderedQuestionCodes.forEach((code) => {
+    const answers = groupedByQuestion.get(code) || [];
+    if (answers.length === 0) return;
+
+    const groupEl = document.createElement('div');
+    groupEl.className = 'final-question-group';
+
+    const header = document.createElement('div');
+    header.className = 'final-question-header';
+
+    const title = document.createElement('div');
+    title.className = 'final-question-title';
+    title.textContent = questionTextByCode.get(code) || 'Other answers';
+
+    header.appendChild(title);
+    groupEl.appendChild(header);
+
+    const answersWrapper = document.createElement('div');
+    answersWrapper.className = 'link-tools-group';
+
+    answers.forEach((r) => {
+      if (!Array.isArray(r.options) || r.options.length === 0) {
+        return;
+      }
+
+      const row = document.createElement('div');
+      row.className = 'link-tools-row';
+      row.dataset.questionCode = r.questionCode || '';
+      row.dataset.optionCode = r.optionCode || '';
+
+      const rowKey = buildKey(r);
+      if (newResultKeys.has(rowKey)) {
+        row.classList.add('link-tools-row--new');
+      }
+
+      const label = document.createElement('span');
+      label.className = 'answer-label';
+      label.textContent = r.label;
+
+      const manualButton = document.createElement('button');
+      manualButton.type = 'button';
+      manualButton.className = 'button button--ghost button--tiny manual-link-button';
+      manualButton.textContent = 'Manual link';
+
+      const reloadButton = document.createElement('button');
+      reloadButton.type = 'button';
+      reloadButton.className = 'link-reload-button';
+      reloadButton.title = 'Re-run search for this answer';
+      reloadButton.textContent = '⟳';
+
+      const select = document.createElement('select');
+      select.className = 'link-select';
+
+      const savedValue = newResultKeys.has(rowKey) ? '' : previousSelections.get(rowKey) || '';
+      r.options.forEach((opt, optIndex) => {
+        const optionEl = document.createElement('option');
+        optionEl.value = opt.url || '';
+        optionEl.textContent = opt.url || '(no URL)';
+        if ((savedValue && optionEl.value === savedValue) || (!savedValue && optIndex === 0)) {
+          optionEl.selected = true;
+        }
+        select.appendChild(optionEl);
+      });
+
+      select.addEventListener('change', () => {
+        const escapedKey = rowKey.replace(/"/g, '\\"');
+        const targetLine = finalCopyEl.querySelector(
+          `.answer-line[data-result-key="${escapedKey}"] .answer-url`
+        );
+        if (targetLine) {
+          const newUrl = select.value || '';
+          targetLine.textContent = newUrl ? ` ${newUrl}` : ' No results found.';
+        }
+      });
+
+      const previewButton = document.createElement('button');
+      previewButton.type = 'button';
+      previewButton.className = 'button button--ghost button--small';
+      previewButton.textContent = 'Preview';
+      previewButton.addEventListener('click', () => {
+        const url = select.value;
+        if (url) {
+          window.open(url, '_blank', 'noopener,noreferrer');
+        }
+      });
+
+      const resultIndex = results.indexOf(r);
+      manualButton.addEventListener('click', (event) => {
+        event.stopPropagation();
+        openManualLinkModal(resultIndex);
+      });
+
+      row.appendChild(label);
+      row.appendChild(manualButton);
+      row.appendChild(select);
+      row.appendChild(previewButton);
+      row.appendChild(reloadButton);
+      answersWrapper.appendChild(row);
+
+      reloadButton.addEventListener('click', () => {
+        if (resultIndex >= 0) {
+          openRerunModal(resultIndex);
+        }
+      });
+    });
+
+    groupEl.appendChild(answersWrapper);
+    finalToolsEl.appendChild(groupEl);
+  });
+
   // Refresh the Run Serper button label/color based on new results
   updateRunSerperButtonState();
 }
@@ -924,17 +1146,18 @@ runSerperButton.addEventListener('click', async () => {
     return;
   }
 
-  setSearchStatus('Running Serper search for selected answers...', 'loading');
-
   try {
-    const response = await axios.post('search-selected', {
+    const freshResults = await runSearchSelectedInBatches({
       schoolName,
       universityWebsite: currentUniversityWebsite || '',
       selections: newSelections,
     });
-    const { results } = response.data || {};
+    if (!freshResults.length) {
+      setSearchStatus('No results were returned. Please try again.', 'info');
+      return;
+    }
 
-    const freshResults = Array.isArray(results) ? results : [];
+    setSearchStatus('Serper searches completed.', 'success');
 
     // Merge new results into any existing ones, keyed by questionCode+optionCode
     const mergedByKey = new Map();
